@@ -558,9 +558,7 @@ All AI-assisted code was reviewed, tested, and modified as required.
 
 ## Demo Video
 
-```text
-Demo Video: <https://drive.google.com/drive/folders/1tc405s6IaW-hkklNEp3qTAk745DEKqiB?usp=sharing>
-```
+[Watch the Dhaka Tesla Pool Demo](https://drive.google.com/drive/folders/1tc405s6IaW-hkk1NEp3qTak745DEKqiB?usp=sharing)
 
 ---
 
