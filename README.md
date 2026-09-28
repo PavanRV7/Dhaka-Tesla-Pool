@@ -419,7 +419,6 @@ Important behaviors tested include:
 
 ## Screenshots / GIFs
 
-```markdown
 ![Dhaka Tesla Pool](docs/screenshots/dhaka_tesla_pool.png)
 ![Driver Arrived](docs/screenshots/driver_arrived.png)
 ![Driver Dashboard](docs/screenshots/driver_dashboard.png)
@@ -428,11 +427,10 @@ Important behaviors tested include:
 ![Passenger Dashboard](docs/screenshots/passenger_dashboard.png)
 ![Seats Occupied](docs/screenshots/pool_open.png)
 ![Request Page](docs/screenshots/request_page.png)
-![Requested rides](docs/screenshots/request_ride.png)
+![Requested Rides](docs/screenshots/request_ride.png)
 ![Ride Started](docs/screenshots/ride_started.png)
-![Ride Details](docs/screenshots/ride-details.png)
+![Ride Details](docs/screenshots/ride_details.png)
 ![Seats Unavailable](docs/screenshots/seats_not_available.png)
-```
 
 ---
 
