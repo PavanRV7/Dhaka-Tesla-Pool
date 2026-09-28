@@ -420,16 +420,27 @@ Important behaviors tested include:
 ## Screenshots / GIFs
 
 ![Dhaka Tesla Pool](docs/screenshots/dhaka_tesla_pool.png)
+<br><br>
 ![Driver Arrived](docs/screenshots/driver_arrived.png)
+<br><br>
 ![Driver Dashboard](docs/screenshots/driver_dashboard.png)
+<br><br>
 ![Estimated Fare](docs/screenshots/estimate_fare.png)
+<br><br>
 ![Login Page](docs/screenshots/login_page.png)
+<br><br>
 ![Passenger Dashboard](docs/screenshots/passenger_dashboard.png)
+<br><br>
 ![Seats Occupied](docs/screenshots/pool_open.png)
+<br><br>
 ![Request Page](docs/screenshots/request_page.png)
+<br><br>
 ![Requested Rides](docs/screenshots/request_ride.png)
+<br><br>
 ![Ride Started](docs/screenshots/ride_started.png)
+<br><br>
 ![Ride Details](docs/screenshots/ride_details.png)
+<br><br>
 ![Seats Unavailable](docs/screenshots/seats_not_available.png)
 
 ---
