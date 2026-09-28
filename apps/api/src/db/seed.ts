@@ -19,7 +19,8 @@ const demoUsers = [
   { name: 'Jashim', email: 'jashim@example.com', password: 'DemoPass123!', role: 'DRIVER' },
   { name: 'Nusrat', email: 'nusrat@example.com', password: 'DemoPass123!', role: 'PASSENGER' },
   { name: 'Rafiq', email: 'rafiq@example.com', password: 'DemoPass123!', role: 'PASSENGER' },
-  { name: 'Shirin', email: 'shirin@example.com', password: 'DemoPass123!', role: 'PASSENGER' }
+  { name: 'Shirin', email: 'shirin@example.com', password: 'DemoPass123!', role: 'PASSENGER' },
+  { name: 'Arif', email: 'arif@example.com', password: 'DemoPass123!', role: 'PASSENGER' }
 ] as const;
 
 const main = async () => {

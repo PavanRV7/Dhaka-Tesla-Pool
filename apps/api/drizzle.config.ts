@@ -6,6 +6,6 @@ export default defineConfig({
   out: './drizzle',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/dhaka_tesla_pool'
+    url: process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@host.docker.internal:5432/dhaka_tesla_pool'
   }
 });

@@ -23,7 +23,7 @@ export const validateStatusTransition = (from: string, to: string) => {
 
 export const addHistoryEntry = async ({ rideRequestId, fromStatus, toStatus, changedByUserId, metadata }: {
   rideRequestId: number;
-  fromStatus: string;
+  fromStatus: string | null;
   toStatus: string;
   changedByUserId?: number | null;
   metadata?: Record<string, unknown>;
@@ -95,7 +95,7 @@ export const createRideRequest = async ({
 
   await addHistoryEntry({
     rideRequestId: ride.id,
-    fromStatus: 'NONE',
+    fromStatus: null,
     toStatus: RIDE_STATUSES.REQUESTED,
     changedByUserId: passengerId,
     metadata: { source: 'ride-created' }

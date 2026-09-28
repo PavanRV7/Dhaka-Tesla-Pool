@@ -1,4 +1,4 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, sql, or} from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { poolMemberships, pools, rideRequests, rideStatusHistory, users, vehicles } from '../db/schema.js';
 import { ConflictError, InvalidStateTransitionError, NotFoundError, PoolCapacityError } from '../utils/errors.js';
@@ -19,68 +19,46 @@ export const setDriverStatus = async (driverId: number, online: boolean) => {
   return { vehicleId: vehicle.id, online };
 };
 
-export const getCompatibleRequestsForDriver = async (driverId: number) => {
-  const vehicle = await getDriverVehicle(driverId);
-  const rows = await db.query.rideRequests.findMany({
-    where: eq(rideRequests.status, 'REQUESTED'),
-    with: {
-      passenger: true,
-      pickupArea: true,
-      destinationArea: true
-    }
-  });
-
-  return rows.filter((ride) => {
-    if (ride.passengerId === driverId) return false;
-    return true;
-  }).map((ride) => ({
-    ...ride,
-    compatible: true,
-    poolSeatsAvailable: vehicle.capacity - 0
-  }));
-};
 
 export const getCurrentPoolForDriver = async (driverId: number) => {
   const vehicle = await getDriverVehicle(driverId);
-  return db.query.pools.findFirst({
-    where: and(eq(pools.vehicleId, vehicle.id), eq(pools.status, 'OPEN')),
-    with: {
-      poolMemberships: {
-        with: {
-          rideRequest: true,
-          passenger: true
-        }
-      }
-    }
-  });
+  return db.query.pools.findFirst({where: and(eq(pools.vehicleId, vehicle.id), or(eq(pools.status, 'OPEN'), eq(pools.status, 'DRIVER_ARRIVED'),eq(pools.status, 'STARTED'))), with: {poolMemberships: {with: {rideRequest: {with: {pickupArea: true, destinationArea: true}}, passenger: true}}}});
+};
+
+
+export const getCompatibleRequestsForDriver = async (driverId: number) => {
+  const vehicle = await getDriverVehicle(driverId);
+  const activePool = await db.query.pools.findFirst({where: and(eq(pools.vehicleId, vehicle.id), eq(pools.status, 'OPEN'))});
+  let occupiedSeats = 0;
+  if (activePool) {
+    const memberships = await db.select().from(poolMemberships).where(eq(poolMemberships.poolId, activePool.id));
+    occupiedSeats = memberships.reduce((sum, membership) => sum + membership.seats, 0);
+  }
+  const seatsAvailable = Math.max(vehicle.capacity - occupiedSeats, 0);
+  const rows = await db.query.rideRequests.findMany({where: eq(rideRequests.status, 'REQUESTED'), with: {passenger: true, pickupArea: true, destinationArea: true}});
+  return rows.filter((ride) => {if (ride.passengerId === driverId) return false;return true;}).map((ride) => ({...ride, compatible: true, poolSeatsAvailable: seatsAvailable}));
 };
 
 export const acceptRideIntoPool = async ({ driverId, rideId }: { driverId: number; rideId: number }) => {
   const vehicle = await getDriverVehicle(driverId);
   const ride = await db.query.rideRequests.findFirst({ where: eq(rideRequests.id, rideId) });
   if (!ride) throw new NotFoundError('Ride request not found.');
-
   if (ride.status !== 'REQUESTED') {
     throw new ConflictError('This ride has already been matched or processed.');
   }
-
   return db.transaction(async (tx) => {
     await tx.execute(sql`SELECT id FROM vehicles WHERE id = ${vehicle.id} FOR UPDATE`);
-
     const [activePool] = await tx.select().from(pools).where(and(eq(pools.vehicleId, vehicle.id), eq(pools.status, 'OPEN'))).limit(1);
     let poolId = activePool?.id;
-
     if (!activePool) {
       const [pool] = await tx.insert(pools).values({ vehicleId: vehicle.id, driverId, status: 'OPEN' }).returning();
       poolId = pool.id;
     }
-
     const currentMemberships = await tx.select().from(poolMemberships).where(eq(poolMemberships.poolId, poolId));
     const occupiedSeats = currentMemberships.reduce((sum, item) => sum + item.seats, 0);
     if (occupiedSeats + ride.seatsRequested > vehicle.capacity) {
       throw new PoolCapacityError('No seats are available in this Tesla pool.');
     }
-
     const [membership] = await tx.insert(poolMemberships).values({
       poolId,
       rideRequestId: ride.id,
@@ -88,10 +66,8 @@ export const acceptRideIntoPool = async ({ driverId, rideId }: { driverId: numbe
       seats: ride.seatsRequested,
       farePaisa: ride.estimatedFarePaisa || 0
     }).returning();
-
     await tx.update(rideRequests).set({ status: 'MATCHED', updatedAt: new Date() }).where(eq(rideRequests.id, rideId));
     await addHistoryEntry({ rideRequestId: rideId, fromStatus: 'REQUESTED', toStatus: 'MATCHED', changedByUserId: driverId, metadata: { poolId } });
-
     return { poolId, membershipId: membership.id };
   });
 };

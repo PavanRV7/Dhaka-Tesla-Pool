@@ -1,4 +1,5 @@
-import { pgEnum, pgTable, serial, integer, text, timestamp, boolean, json, uniqueIndex, index, primaryKey, varchar } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+import {pgEnum, pgTable, serial, integer, text, timestamp, json, uniqueIndex, index, varchar} from 'drizzle-orm/pg-core';
 
 export const userRoleEnum = pgEnum('user_role', ['PASSENGER', 'DRIVER']);
 export const rideStatusEnum = pgEnum('ride_status', ['REQUESTED', 'MATCHED', 'DRIVER_ARRIVED', 'STARTED', 'COMPLETED', 'CANCELLED']);
@@ -91,7 +92,7 @@ export const poolMemberships = pgTable('pool_memberships', {
 export const rideStatusHistory = pgTable('ride_status_history', {
   id: serial('id').primaryKey(),
   rideRequestId: integer('ride_request_id').notNull().references(() => rideRequests.id),
-  fromStatus: rideStatusEnum('from_status').notNull(),
+  fromStatus: rideStatusEnum('from_status'),
   toStatus: rideStatusEnum('to_status').notNull(),
   changedByUserId: integer('changed_by_user_id').references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -99,3 +100,97 @@ export const rideStatusHistory = pgTable('ride_status_history', {
 }, (table) => ({
   rideRequestIdx: index('ride_status_history_ride_request_id_idx').on(table.rideRequestId)
 }));
+
+export const usersRelations = relations(users, ({ many }) => ({
+  vehicles: many(vehicles),
+  passengerRides: many(rideRequests),
+  driverPools: many(pools),
+  poolMemberships: many(poolMemberships),
+  changedRideStatuses: many(rideStatusHistory)
+}));
+
+export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
+  driver: one(users, {
+    fields: [vehicles.driverId],
+    references: [users.id]
+  }),
+  pools: many(pools)
+}));
+
+export const areasRelations = relations(areas, ({ many }) => ({
+  pickupRides: many(rideRequests, {
+    relationName: 'pickupArea'
+  }),
+  destinationRides: many(rideRequests, {
+    relationName: 'destinationArea'
+  })
+}));
+
+export const rideRequestsRelations = relations(rideRequests, ({ one, many }) => ({
+  passenger: one(users, {
+    fields: [rideRequests.passengerId],
+    references: [users.id]
+  }),
+
+  pickupArea: one(areas, {
+    fields: [rideRequests.pickupAreaId],
+    references: [areas.id],
+    relationName: 'pickupArea'
+  }),
+
+  destinationArea: one(areas, {
+    fields: [rideRequests.destinationAreaId],
+    references: [areas.id],
+    relationName: 'destinationArea'
+  }),
+
+  poolMemberships: many(poolMemberships),
+
+  statusHistory: many(rideStatusHistory)
+}));
+
+export const poolsRelations = relations(pools, ({ one, many }) => ({
+  vehicle: one(vehicles, {
+    fields: [pools.vehicleId],
+    references: [vehicles.id]
+  }),
+
+  driver: one(users, {
+    fields: [pools.driverId],
+    references: [users.id]
+  }),
+
+  poolMemberships: many(poolMemberships)
+}));
+
+export const poolMembershipsRelations = relations(poolMemberships, ({ one }) => ({
+  pool: one(pools, {
+    fields: [poolMemberships.poolId],
+    references: [pools.id]
+  }),
+
+  rideRequest: one(rideRequests, {
+    fields: [poolMemberships.rideRequestId],
+    references: [rideRequests.id]
+  }),
+
+  passenger: one(users, {
+    fields: [poolMemberships.passengerId],
+    references: [users.id]
+  })
+}));
+
+export const rideStatusHistoryRelations = relations(
+  rideStatusHistory,
+  ({ one }) => ({
+    rideRequest: one(rideRequests, {
+      fields: [rideStatusHistory.rideRequestId],
+      references: [rideRequests.id]
+    }),
+
+    changedByUser: one(users, {
+      fields: [rideStatusHistory.changedByUserId],
+      references: [users.id]
+    })
+  })
+);

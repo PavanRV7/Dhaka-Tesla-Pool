@@ -67,9 +67,11 @@ rideRoutes.get('/', requireRole('PASSENGER'), async (req: AuthenticatedRequest, 
 
 rideRoutes.get('/:id', requireRole('PASSENGER'), async (req: AuthenticatedRequest, res, next) => {
   try {
-    const ride = await db.query.rideRequests.findFirst({ where: eq(rideRequests.id, Number(req.params.id)) });
+    const ride = await db.query.rideRequests.findFirst({where: eq(rideRequests.id, Number(req.params.id)), with: {pickupArea: true, destinationArea: true}});
     if (!ride) throw new NotFoundError('Ride request was not found.');
-    if (ride.passengerId !== req.user!.id) throw new ForbiddenError('You cannot access another passenger ride.');
+    if (ride.passengerId !== req.user!.id) {
+      throw new ForbiddenError('You cannot access another passenger ride.');
+    }
     res.json({ success: true, ride });
   } catch (error) {
     next(error);
